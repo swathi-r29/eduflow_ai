@@ -4,7 +4,22 @@ import { api } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import type { ClassItem } from '../../types';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
-import { UserPlus, BookOpen, Sparkles, Flame, Target, BookMarked, ChevronRight, BarChart3 } from 'lucide-react';
+import {
+  UserPlus,
+  BookOpen,
+  Sparkles,
+  Flame,
+  Target,
+  BookMarked,
+  ChevronRight,
+  BarChart3,
+  Clock,
+  Check,
+  Search,
+  X,
+  Users,
+  Send
+} from 'lucide-react';
 
 import StreakCalendar from '../../components/common/StreakCalendar';
 import { Card, CardHeader, CardContent } from '../../components/ui/Card';
@@ -17,6 +32,11 @@ export default function StudentDashboard() {
   const [enrolledClasses, setEnrolledClasses] = useState<ClassItem[]>([]);
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [showJoinModal, setShowJoinModal] = useState(false);
+  const [joinTab, setJoinTab] = useState<'list' | 'code'>('list');
+  const [availableClasses, setAvailableClasses] = useState<any[]>([]);
+  const [loadingAvailable, setLoadingAvailable] = useState(false);
+  const [requestingClassId, setRequestingClassId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [joinCode, setJoinCode] = useState('');
   const [joining, setJoining] = useState(false);
   const [joinMsg, setJoinMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -83,6 +103,44 @@ export default function StudentDashboard() {
     }
   };
 
+  const loadAvailableClasses = async () => {
+    setLoadingAvailable(true);
+    try {
+      const res = await api.get('/classes/available');
+      setAvailableClasses(res.data.classes || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingAvailable(false);
+    }
+  };
+
+  const openJoinModal = () => {
+    setShowJoinModal(true);
+    setJoinMsg(null);
+    setJoinTab('list');
+    loadAvailableClasses();
+  };
+
+  const handleRequestJoin = async (classId: string) => {
+    setRequestingClassId(classId);
+    setJoinMsg(null);
+    try {
+      const res = await api.post(`/classes/${classId}/request-join`);
+      setJoinMsg({ type: 'success', text: res.data.message || 'Request sent! Your teacher will review it.' });
+      setAvailableClasses((prev) =>
+        prev.map((c) => (c._id === classId ? { ...c, isPending: true } : c))
+      );
+    } catch (err: any) {
+      setJoinMsg({
+        type: 'error',
+        text: err.response?.data?.message || err.response?.data?.error || 'Failed to send join request'
+      });
+    } finally {
+      setRequestingClassId(null);
+    }
+  };
+
   // Find lowest mastery concept for recommendation
   const lowestConcept = progress?.concepts?.length 
     ? [...progress.concepts].sort((a, b) => a.masteryScore - b.masteryScore)[0] 
@@ -99,7 +157,7 @@ export default function StudentDashboard() {
           </h1>
           <p className="text-[#64748B] text-sm mt-1">Here is a summary of your AI-assisted learning journey.</p>
         </div>
-        <Button onClick={() => setShowJoinModal(true)}>
+        <Button onClick={openJoinModal}>
           <UserPlus size={16} /> Join Class
         </Button>
       </div>
@@ -187,7 +245,7 @@ export default function StudentDashboard() {
                   <p className="text-xs text-[#64748B] mt-1">{cls.subject || 'General Subject'}</p>
                   <div className="mt-4 pt-4 border-t border-[#E2E8F0] flex justify-between items-center">
                     <span className="text-[#64748B] font-mono text-xs">Code: {cls.joinCode}</span>
-                    <Link to="/student/assignments" className="text-xs font-semibold text-[#2563EB] hover:underline">
+                    <Link to={`/student/assignments?classId=${cls._id}`} className="text-xs font-semibold text-[#2563EB] hover:underline flex items-center gap-1">
                       View Tasks &rarr;
                     </Link>
                   </div>
@@ -200,7 +258,7 @@ export default function StudentDashboard() {
             icon={BookOpen}
             title="No Classes Yet"
             description="You have not joined any classes yet. Click 'Join Class' and enter your teacher's 8-character passcode to enroll."
-            action={<Button onClick={() => setShowJoinModal(true)}>Join Class</Button>}
+            action={<Button onClick={openJoinModal}>Join Class</Button>}
           />
         )}
       </div>
@@ -246,44 +304,207 @@ export default function StudentDashboard() {
         </div>
       </div>
 
-      {/* Join Class Modal */}
+      {/* Join Class Modal (Browse List + Passcode) */}
       {showJoinModal && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-[#E2E8F0] rounded-xl p-6 max-w-sm w-full space-y-4 shadow-lg z-10">
-            <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-              <UserPlus size={18} className="text-[#2563EB]" /> Join a Class
-            </h2>
-            <p className="text-sm text-[#64748B]">
-              Enter the 8-character join passcode provided by your teacher to enroll in their class.
-            </p>
-            <form onSubmit={handleJoinClass} className="space-y-4">
-              <div>
-                <label className="text-sm font-semibold text-slate-700 mb-1.5 block">Class Passcode</label>
-                <input
-                  required
-                  autoFocus
-                  className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg px-4 py-3 text-center text-lg font-mono uppercase tracking-widest text-slate-900 focus:bg-white focus:ring-2 focus:ring-[#2563EB] transition-all outline-none"
-                  placeholder="e.g. DEMO1234"
-                  value={joinCode}
-                  onChange={(e) => setJoinCode(e.target.value)}
-                />
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-[#E2E8F0] rounded-2xl max-w-xl w-full shadow-2xl z-10 overflow-hidden flex flex-col max-h-[90vh]">
+            
+            {/* Modal Header */}
+            <div className="p-5 border-b border-[#E2E8F0] flex items-center justify-between bg-slate-50/70">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600">
+                  <UserPlus size={18} />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-slate-900">Join a Classroom</h2>
+                  <p className="text-xs text-[#64748B]">Choose how you want to join your teacher's class</p>
+                </div>
               </div>
+              <button
+                onClick={() => setShowJoinModal(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
 
+            {/* Modal Tabs */}
+            <div className="flex border-b border-[#E2E8F0] px-5 bg-white">
+              <button
+                type="button"
+                onClick={() => setJoinTab('list')}
+                className={`py-3 px-4 text-xs font-bold tracking-wide uppercase border-b-2 transition-all cursor-pointer flex items-center gap-2 ${
+                  joinTab === 'list'
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <BookOpen size={14} /> Browse Classes & Request
+                {availableClasses.length > 0 && (
+                  <span className="ml-1 bg-blue-50 text-blue-700 text-[10px] font-extrabold px-1.5 py-0.5 rounded-full border border-blue-100">
+                    {availableClasses.length}
+                  </span>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => setJoinTab('code')}
+                className={`py-3 px-4 text-xs font-bold tracking-wide uppercase border-b-2 transition-all cursor-pointer flex items-center gap-2 ${
+                  joinTab === 'code'
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <Target size={14} /> Join with Passcode
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-5 overflow-y-auto space-y-4">
+              
               {joinMsg && (
-                <p className={`text-xs p-3 rounded-lg font-medium ${joinMsg.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
-                  {joinMsg.text}
-                </p>
+                <div
+                  className={`text-xs p-3 rounded-xl font-medium border flex items-center gap-2 ${
+                    joinMsg.type === 'success'
+                      ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                      : 'bg-red-50 text-red-800 border-red-200'
+                  }`}
+                >
+                  {joinMsg.type === 'success' ? <Check size={14} className="shrink-0" /> : <X size={14} className="shrink-0" />}
+                  <span>{joinMsg.text}</span>
+                </div>
               )}
 
-              <div className="flex justify-end gap-2 pt-2">
-                <Button type="button" variant="secondary" onClick={() => setShowJoinModal(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit" variant="primary" disabled={joining}>
-                  {joining ? 'Joining...' : 'Join Class'}
-                </Button>
-              </div>
-            </form>
+              {/* Tab 1: Browse Class List & Request */}
+              {joinTab === 'list' && (
+                <div className="space-y-3">
+                  <div className="relative">
+                    <Search size={14} className="absolute left-3 top-3 text-slate-400" />
+                    <input
+                      type="text"
+                      className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl pl-9 pr-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                      placeholder="Search class by name, subject, or teacher..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                  </div>
+
+                  {loadingAvailable ? (
+                    <div className="p-8 text-center">
+                      <div className="animate-spin rounded-full h-7 w-7 border-b-2 border-blue-600 mx-auto"></div>
+                      <p className="text-xs text-slate-500 mt-2">Loading available classes...</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                      {availableClasses
+                        .filter((cls) => {
+                          const q = searchQuery.toLowerCase();
+                          return (
+                            (cls.name || '').toLowerCase().includes(q) ||
+                            (cls.subject || '').toLowerCase().includes(q) ||
+                            (cls.teacher?.name || '').toLowerCase().includes(q)
+                          );
+                        })
+                        .map((cls) => (
+                          <div
+                            key={cls._id}
+                            className="p-3.5 rounded-xl bg-white border border-[#E2E8F0] hover:border-blue-200 hover:shadow-xs transition-all flex items-center justify-between gap-3"
+                          >
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h4 className="font-bold text-sm text-slate-900 truncate">{cls.name}</h4>
+                                <span className="bg-slate-100 text-slate-600 text-[10px] font-semibold px-2 py-0.5 rounded-md border border-slate-200">
+                                  {cls.subject || 'General'}
+                                </span>
+                              </div>
+                              <p className="text-xs text-slate-500 mt-0.5">
+                                Teacher: <span className="text-slate-700 font-medium">{cls.teacher?.name || 'Instructor'}</span>
+                                {' · '}
+                                <span className="inline-flex items-center gap-0.5">
+                                  <Users size={11} /> {cls.studentCount || 0} students
+                                </span>
+                              </p>
+                            </div>
+
+                            <div className="shrink-0">
+                              {cls.isEnrolled ? (
+                                <span className="px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold rounded-lg flex items-center gap-1">
+                                  <Check size={13} /> Enrolled
+                                </span>
+                              ) : cls.isPending ? (
+                                <span className="px-3 py-1.5 bg-amber-50 text-amber-800 border border-amber-200 text-xs font-semibold rounded-lg flex items-center gap-1.5">
+                                  <Clock size={13} className="text-amber-600 animate-spin" /> Pending Approval
+                                </span>
+                              ) : (
+                                <Button
+                                  variant="primary"
+                                  size="sm"
+                                  disabled={requestingClassId === cls._id}
+                                  onClick={() => handleRequestJoin(cls._id)}
+                                >
+                                  {requestingClassId === cls._id ? (
+                                    'Sending...'
+                                  ) : (
+                                    <>
+                                      <Send size={12} className="mr-1" /> Request to Join
+                                    </>
+                                  )}
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+
+                      {availableClasses.length === 0 && (
+                        <div className="p-8 text-center text-slate-500">
+                          <BookOpen size={28} className="mx-auto text-slate-300 mb-2" />
+                          <p className="text-sm font-semibold">No classes available yet</p>
+                          <p className="text-xs text-slate-400 mt-0.5">Ask your teacher to create a class.</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Tab 2: Join with Passcode */}
+              {joinTab === 'code' && (
+                <form onSubmit={handleJoinClass} className="space-y-4 pt-1">
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5 block">
+                      Class Passcode
+                    </label>
+                    <input
+                      required
+                      autoFocus
+                      className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-4 py-3.5 text-center text-xl font-mono uppercase tracking-widest text-slate-900 focus:bg-white focus:ring-2 focus:ring-[#2563EB] transition-all outline-none"
+                      placeholder="e.g. DEMO1234"
+                      value={joinCode}
+                      onChange={(e) => setJoinCode(e.target.value)}
+                    />
+                    <p className="text-[11px] text-[#64748B] mt-1.5 text-center">
+                      Enter the 8-character passcode provided by your teacher to enroll instantly.
+                    </p>
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-2">
+                    <Button type="button" variant="secondary" onClick={() => setShowJoinModal(false)}>
+                      Cancel
+                    </Button>
+                    <Button type="submit" variant="primary" disabled={joining}>
+                      {joining ? 'Joining...' : 'Enroll with Passcode'}
+                    </Button>
+                  </div>
+                </form>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-3 bg-slate-50 border-t border-[#E2E8F0] text-center text-[11px] text-slate-500">
+              {joinTab === 'list'
+                ? 'Join requests must be approved by the teacher before you can access assignments.'
+                : 'Already have a code? Entering it bypasses teacher approval.'}
+            </div>
           </div>
         </div>
       )}

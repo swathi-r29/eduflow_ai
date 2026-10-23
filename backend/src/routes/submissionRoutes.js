@@ -8,6 +8,7 @@ import {
   triggerGradingPipeline,
   auditGradingConsistency,
   getClassReTeachPlan,
+  getTeacherReviewStrategy,
   checkAssignmentPlagiarism,
   getSubmission,
   listSubmissions,
@@ -35,6 +36,7 @@ router.post('/journey/complete-node', completeJourneyNode);
 router.post('/grading/:id', triggerGradingPipeline);
 router.post('/audit/:id', auditGradingConsistency);
 router.post('/class-reteach/:assignmentId', requireRole('teacher'), getClassReTeachPlan);
+router.post('/teacher-review-strategy', requireRole('teacher'), getTeacherReviewStrategy);
 router.post('/plagiarism/:assignmentId', requireRole('teacher', 'admin'), checkAssignmentPlagiarism);
 
 // 6. Querying & Calibration

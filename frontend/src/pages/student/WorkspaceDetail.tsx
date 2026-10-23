@@ -457,11 +457,11 @@ export default function WorkspaceDetail() {
                 <div>
                   <label className="text-sm font-semibold text-slate-700 mb-1 block">YouTube Link / URL</label>
                   <div className="relative">
-                    <LinkIcon size={16} className="absolute left-3 top-2.5 text-[#64748B]" />
+                    <LinkIcon size={16} className="absolute left-3 top-2.5 text-[#64748B] pointer-events-none" />
                     <input
                       required
                       type="url"
-                      className="input-field pl-10"
+                      className="input-field !pl-10"
                       placeholder="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
                       value={ytUrl}
                       onChange={(e) => setYtUrl(e.target.value)}

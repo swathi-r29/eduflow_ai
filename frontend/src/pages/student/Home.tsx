@@ -50,7 +50,7 @@ export default function StudentHome() {
 
         {/* Hero Illustration / Dashboard Preview */}
         <div className="flex-1 w-full relative z-10 hidden md:block">
-          <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-6 shadow-lg shadow-slate-200/50 transform rotate-2 hover:rotate-0 transition-transform duration-500">
+          <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-6 shadow-lg shadow-slate-200/50 hover:shadow-xl transition-shadow duration-300">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">

@@ -12,13 +12,21 @@ export interface User {
   completedNodes?: string[];
 }
 
+export interface JoinRequest {
+  _id?: string;
+  student: { _id: string; name: string; email: string };
+  status: 'pending' | 'approved' | 'rejected';
+  requestedAt: string;
+}
+
 export interface ClassItem {
   _id: string;
   name: string;
   subject?: string;
   joinCode?: string;
-  students: string[];
+  students: any[];
   teacher: { _id: string; name: string; email: string } | string;
+  joinRequests?: JoinRequest[];
 }
 
 export interface RubricCriterion {
@@ -29,7 +37,7 @@ export interface RubricCriterion {
 
 export interface Assignment {
   _id: string;
-  class: string;
+  class: string | { _id: string; name: string; subject?: string };
   title: string;
   question: string;
   sampleSolution?: string;

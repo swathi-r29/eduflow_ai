@@ -118,7 +118,7 @@ function applyDeterministicScoreEnforcement({ evaluation, rubric, maxScore, exec
   const hasExecution = executionResults && executionResults.applicable !== false && Array.isArray(executionResults.tests) && executionResults.tests.length > 0;
   const { totalTests = 0, passedTests = 0, failedTests = 0 } = executionResults || {};
   const passRatio = totalTests > 0 ? passedTests / totalTests : 1.0;
-  const hasFailures = failedTests > 0;
+  const hasFailures = hasExecution && failedTests > 0;
 
   let totalScore = 0;
   const reviewReasons = [];

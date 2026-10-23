@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../../api/client';
-import { CheckCircle2, Clock, Sparkles, User, FileText, Search, ShieldCheck, ChevronRight, X } from 'lucide-react';
+import { CheckCircle2, Clock, Sparkles, User, FileText, Search, ShieldCheck, ChevronRight, X, RefreshCw } from 'lucide-react';
 import { Card, CardHeader, CardContent } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
@@ -35,20 +35,42 @@ export default function TeacherSubmissions() {
     load();
   }, []);
 
+  const [checkingStatus, setCheckingStatus] = useState(false);
+
+  const fetchGradingResult = async (submissionId: string) => {
+    try {
+      const { data } = await api.get(`/submissions/${submissionId}`);
+      if (data.gradingResult) {
+        setGrading(data.gradingResult);
+        setEditScore(data.gradingResult.teacherScore ?? data.gradingResult.aiScore);
+        setEditFeedback(data.gradingResult.teacherFeedback ?? data.gradingResult.feedback?.explanation ?? '');
+        load();
+      }
+      return data.gradingResult;
+    } catch (err) {
+      console.error('Error loading submission detail:', err);
+      return null;
+    }
+  };
+
   const open = async (s: any) => {
     setSelected(s);
     setGrading(null);
-    try {
-      const { data } = await api.get(`/submissions/${s._id}`);
-      setGrading(data.gradingResult);
-      if (data.gradingResult) {
-        setEditScore(data.gradingResult.teacherScore ?? data.gradingResult.aiScore);
-        setEditFeedback(data.gradingResult.teacherFeedback ?? data.gradingResult.feedback?.explanation ?? '');
-      }
-    } catch (err) {
-      console.error('Error loading submission detail:', err);
-    }
+    await fetchGradingResult(s._id);
   };
+
+  useEffect(() => {
+    if (!selected || grading) return;
+
+    const interval = setInterval(async () => {
+      const result = await fetchGradingResult(selected._id);
+      if (result) {
+        clearInterval(interval);
+      }
+    }, 2500);
+
+    return () => clearInterval(interval);
+  }, [selected, grading]);
 
   const calibrate = async (action: 'accept' | 'edit' | 'override') => {
     if (!grading) return;
@@ -109,13 +131,13 @@ export default function TeacherSubmissions() {
 
       {/* Search Bar */}
       <div className="relative">
-        <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-[#64748B]" />
+        <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
         <input
           type="text"
           placeholder="Search by student name, roll number, or assignment title..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="input-field pl-11"
+          className="input-field !pl-10 py-2.5 text-sm"
         />
       </div>
 
@@ -217,9 +239,28 @@ export default function TeacherSubmissions() {
 
               {/* AI Grading Results */}
               {!grading ? (
-                <div className="py-8 text-center space-y-2 bg-blue-50 rounded-lg border border-blue-100">
-                  <Sparkles className="w-6 h-6 text-[#2563EB] animate-spin mx-auto" />
-                  <p className="text-sm font-semibold text-blue-900">AI evaluation is in progress...</p>
+                <div className="py-8 text-center space-y-3 bg-blue-50/80 rounded-xl border border-blue-100 p-6">
+                  <Sparkles className="w-8 h-8 text-[#2563EB] animate-spin mx-auto" />
+                  <div>
+                    <p className="text-sm font-bold text-blue-900">AI evaluation is in progress...</p>
+                    <p className="text-xs text-blue-700/80 mt-1 max-w-sm mx-auto">
+                      The multi-agent pipeline is scoring your rubric criteria and generating diagnostic feedback. It takes about 10–20 seconds.
+                    </p>
+                  </div>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    disabled={checkingStatus}
+                    onClick={async () => {
+                      if (!selected) return;
+                      setCheckingStatus(true);
+                      await fetchGradingResult(selected._id);
+                      setCheckingStatus(false);
+                    }}
+                  >
+                    <RefreshCw size={13} className={checkingStatus ? 'animate-spin mr-1.5' : 'mr-1.5'} />
+                    {checkingStatus ? 'Checking...' : 'Check Status'}
+                  </Button>
                 </div>
               ) : (
                 <div className="space-y-5">

@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 
 const gradingResultSchema = new mongoose.Schema({
   submission: { type: mongoose.Schema.Types.ObjectId, ref: 'Submission', required: true, index: true },
+  submissionId: { type: mongoose.Schema.Types.ObjectId, ref: 'Submission' },
   assignment: { type: mongoose.Schema.Types.ObjectId, ref: 'Assignment', required: true, index: true },
   student: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
 

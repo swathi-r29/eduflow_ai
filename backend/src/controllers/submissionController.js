@@ -522,3 +522,107 @@ export const completeJourneyNode = asyncHandler(async (req, res) => {
   const updatedUser = await awardUserXP(req.user._id, 'PRACTICE_QUIZ', nodeId);
   res.json({ success: true, user: updatedUser });
 });
+
+/**
+ * 8. Teacher-Wide Aggregate Review Strategy Generator
+ */
+export const getTeacherReviewStrategy = asyncHandler(async (req, res) => {
+  const teacherId = req.user._id;
+
+  // 1. Find all classes taught by this teacher
+  const classes = await ClassModel.find({ teacher: teacherId });
+  const classIds = classes.map((c) => c._id);
+
+  // 2. Find all assignments created by this teacher or for their classes
+  const assignments = await Assignment.find({
+    $or: [{ teacher: teacherId }, { class: { $in: classIds } }]
+  }).sort({ createdAt: -1 });
+
+  if (!assignments.length) {
+    return res.json({
+      reTeachPlan: {
+        lessonTitle: 'Classroom Review Strategy: Onboarding & Diagnostic',
+        durationMinutes: 15,
+        keyMisconceptions: ['No active assignments yet. Create an assignment to track student misconceptions.'],
+        microLessonSteps: [
+          {
+            minuteRange: '0-5 min',
+            activity: 'Concept Introduction & Warmup',
+            teacherGuidance: 'Publish your first assignment to unlock real-time AI root cause insights.'
+          },
+          {
+            minuteRange: '5-15 min',
+            activity: 'Interactive Problem Solving',
+            teacherGuidance: 'Walk through sample test cases and encourage peer discussion.'
+          }
+        ],
+        peerTutoringPairs: []
+      },
+      stats: { totalSubmissions: 0, averageScore: 0, totalClasses: classes.length }
+    });
+  }
+
+  // 3. Find all GradingResults for these assignments
+  const assignmentIds = assignments.map((a) => a._id);
+  const results = await GradingResult.find({ assignment: { $in: assignmentIds } })
+    .populate('student', 'name email rollNumber')
+    .populate('assignment', 'title')
+    .sort({ createdAt: -1 });
+
+  const totalSubmissions = results.length;
+  const avgScore = totalSubmissions > 0
+    ? Math.round(results.reduce((acc, r) => acc + (r.totalScore ?? r.aiScore ?? 0), 0) / totalSubmissions)
+    : 0;
+
+  const studentSummaries = results.map((r) => ({
+    studentId: r.student?._id || r.student,
+    studentName: r.student?.name || (r.student?.rollNumber ? `Roll: ${r.student.rollNumber}` : 'Student'),
+    score: r.totalScore ?? r.aiScore ?? 0,
+    weakConcepts: r.feedback?.weaknesses || [r.rootCause?.detectedMisconception].filter(Boolean)
+  }));
+
+  const mainAssignmentTitle = assignments[0]?.title || 'Core Concepts Review';
+
+  let reTeachPlan;
+  try {
+    reTeachPlan = await generateReTeachPlan({
+      assignmentTitle: `${mainAssignmentTitle} (Class-Wide Review)`,
+      studentGradingResults: studentSummaries
+    });
+  } catch (err) {
+    logger.error('Error in generateReTeachPlan:', err);
+    reTeachPlan = {
+      lessonTitle: `15-Minute Re-Teaching & Mastery: ${mainAssignmentTitle}`,
+      durationMinutes: 15,
+      keyMisconceptions: ['Classroom concept reinforcement', 'Edge case & logic verification'],
+      microLessonSteps: [
+        {
+          minuteRange: '0-3 min',
+          activity: 'Misconception Spotlight',
+          teacherGuidance: 'Project common syntax or logic misconceptions from recent submissions on the screen.'
+        },
+        {
+          minuteRange: '3-10 min',
+          activity: 'Interactive Group Exercise',
+          teacherGuidance: 'Lead a short code-along or conceptual walkthrough resolving the identified edge cases.'
+        },
+        {
+          minuteRange: '10-15 min',
+          activity: 'Quick Check & Peer Feedback',
+          teacherGuidance: 'Have students verify their partner’s solution against the rubric requirements.'
+        }
+      ],
+      peerTutoringPairs: []
+    };
+  }
+
+  res.json({
+    reTeachPlan,
+    stats: {
+      totalSubmissions,
+      averageScore: avgScore,
+      totalClasses: classes.length,
+      primaryAssignment: mainAssignmentTitle
+    }
+  });
+});

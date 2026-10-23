@@ -4,7 +4,7 @@ import axios from 'axios';
 import { api } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { VoiceInputButton } from '../../components/common/VoiceInputButton';
-import { Sparkles, Camera, CheckCircle2, AlertCircle, FileText, Send, Loader2 } from 'lucide-react';
+import { Sparkles, Camera, CheckCircle2, AlertCircle, FileText, Send, Loader2, ArrowLeft, BookOpen } from 'lucide-react';
 
 export const PublicSubmission: React.FC = () => {
   const { assignmentId } = useParams<{ assignmentId: string }>();
@@ -37,8 +37,8 @@ export const PublicSubmission: React.FC = () => {
   useEffect(() => {
     async function fetchAssignment() {
       try {
-        const res = await axios.get(`/api/assignments/${assignmentId}`);
-        setAssignment(res.data.assignment);
+        const res = await api.get(`/assignments/${assignmentId}`);
+        setAssignment(res.data.assignment || res.data);
       } catch (err) {
         console.error('Failed to load assignment:', err);
       } finally {
@@ -61,7 +61,7 @@ export const PublicSubmission: React.FC = () => {
     reader.onloadend = async () => {
       try {
         const base64Image = reader.result as string;
-        const res = await axios.post('/api/submissions/ocr', {
+        const res = await api.post('/submissions/ocr', {
           assignmentId,
           imageInput: base64Image
         });
@@ -83,7 +83,7 @@ export const PublicSubmission: React.FC = () => {
     if (!answerText.trim()) return;
     setPreflightLoading(true);
     try {
-      const res = await axios.post('/api/submissions/preflight', {
+      const res = await api.post('/submissions/preflight', {
         assignmentId,
         answerText
       });
@@ -170,13 +170,43 @@ export const PublicSubmission: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 py-10 px-4">
       <div className="max-w-3xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 space-y-3">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-xs font-semibold rounded-full">
-            <span>Public Student Portal</span>
+        
+        {/* Navigation Back */}
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
+        >
+          <ArrowLeft size={14} /> Back to Assignments
+        </button>
+
+        {/* Full Question Header & Prompt Card */}
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 space-y-4">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-[#2563EB] text-xs font-semibold rounded-full border border-blue-100">
+              <FileText size={13} /> Coursework
+            </span>
+            {assignment?.maxScore && (
+              <span className="text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 px-3 py-1 rounded-md">
+                Max Score: {assignment.maxScore} pts
+              </span>
+            )}
           </div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{assignment?.title || 'Assignment Submission'}</h1>
-          <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap">{assignment?.description || assignment?.question}</p>
+
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+              {assignment?.title || 'Assignment Submission'}
+            </h1>
+          </div>
+
+          <div className="p-5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2.5 flex items-center gap-1.5">
+              <BookOpen size={13} /> Full Assignment Question / Prompt
+            </h3>
+            <div className="text-sm text-slate-800 dark:text-slate-200 leading-relaxed whitespace-pre-wrap font-sans">
+              {assignment?.question || assignment?.description}
+            </div>
+          </div>
         </div>
 
         {/* Form */}

@@ -124,13 +124,18 @@ export default function Classes() {
                   <div className="flex-1 min-w-0">
                     <h3 className="font-bold text-base text-slate-900 line-clamp-1">{c.name}</h3>
                     <p className="text-sm text-[#64748B] mt-0.5">{c.subject || 'General'}</p>
-                    <div className="mt-3 flex flex-wrap items-center gap-3">
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
                       <span className="text-xs font-mono font-medium bg-slate-100 text-slate-700 border border-[#E2E8F0] px-2 py-1 rounded-md">
                         Code: {c.joinCode}
                       </span>
                       <span className="text-xs text-[#64748B] flex items-center gap-1">
                         <Users size={12} /> {c.students?.length || c.studentIds?.length || 0} students
                       </span>
+                      {((c.joinRequests || []).filter((r: any) => r.status === 'pending')).length > 0 && (
+                        <span className="text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300 px-2 py-0.5 rounded-full animate-pulse">
+                          {(c.joinRequests || []).filter((r: any) => r.status === 'pending').length} pending req
+                        </span>
+                      )}
                     </div>
                   </div>
                   <Link to={`/teacher/classes/${c._id}`}>
@@ -186,12 +191,37 @@ export default function Classes() {
 
           <div>
             <label className="text-sm font-semibold text-slate-700 block mb-2">Rubric Criteria</label>
+            <div className="flex gap-3 text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5 px-0.5">
+              <span className="flex-1">Criterion Name</span>
+              <span className="w-28">Points</span>
+              <span className="w-8"></span>
+            </div>
             <div className="space-y-3">
               {rubric.map((r, i) => (
                 <div key={i} className="flex gap-3 items-center">
-                  <input className="input-field flex-1" placeholder="Criterion name" value={r.criterion} onChange={(e) => updateRubric(i, 'criterion', e.target.value)} />
-                  <input type="number" className="input-field w-24" placeholder="Points" value={r.maxPoints} onChange={(e) => updateRubric(i, 'maxPoints', Number(e.target.value))} />
-                  <button onClick={() => setRubric((prev) => prev.filter((_, idx) => idx !== i))} className="p-2 rounded-lg hover:bg-red-50 text-[#64748B] hover:text-red-600 transition-colors">
+                  <div className="flex-1 min-w-0">
+                    <input
+                      className="input-field"
+                      placeholder="Criterion name (e.g., OOP Design, Logic & Correctness)"
+                      value={r.criterion}
+                      onChange={(e) => updateRubric(i, 'criterion', e.target.value)}
+                    />
+                  </div>
+                  <div className="w-28 shrink-0">
+                    <input
+                      type="number"
+                      className="input-field"
+                      placeholder="Points"
+                      value={r.maxPoints}
+                      onChange={(e) => updateRubric(i, 'maxPoints', Number(e.target.value))}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setRubric((prev) => prev.filter((_, idx) => idx !== i))}
+                    className="p-2 rounded-lg hover:bg-red-50 text-[#64748B] hover:text-red-600 transition-colors shrink-0"
+                    title="Remove criterion"
+                  >
                     <Trash2 size={16} />
                   </button>
                 </div>

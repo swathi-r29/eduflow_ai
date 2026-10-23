@@ -84,9 +84,20 @@ export const createAssignment = asyncHandler(async (req, res) => {
 export const listAssignments = asyncHandler(async (req, res) => {
   const filter = {};
   const classId = req.query.classId || req.params.classId;
-  if (classId) filter.class = classId;
-  if (req.user.role === 'teacher') filter.teacher = req.user._id;
-  const assignments = await Assignment.find(filter).sort({ createdAt: -1 });
+  if (classId) {
+    filter.class = classId;
+  } else if (req.user.role === 'student') {
+    const studentClasses = await ClassModel.find({ students: req.user._id }).select('_id');
+    filter.class = { $in: studentClasses.map((c) => c._id) };
+  }
+
+  if (req.user.role === 'teacher') {
+    filter.teacher = req.user._id;
+  }
+
+  const assignments = await Assignment.find(filter)
+    .populate('class', 'name subject joinCode')
+    .sort({ createdAt: -1 });
   res.json({ assignments });
 });
 

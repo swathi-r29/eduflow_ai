@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { api } from '../../api/client';
 import type { ClassItem, Assignment } from '../../types';
-import { Users, BookOpen, Copy, Check, Plus, Sparkles } from 'lucide-react';
+import { Users, BookOpen, Copy, Check, Plus, Sparkles, UserCheck, UserX, Clock } from 'lucide-react';
 import { Card, CardHeader, CardContent } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { EmptyState } from '../../components/ui/EmptyState';
@@ -15,6 +15,7 @@ export default function TeacherClassDetail() {
   const [copied, setCopied] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   // New assignment form state
   const [assignTitle, setAssignTitle] = useState('');
@@ -76,6 +77,18 @@ export default function TeacherClassDetail() {
       navigator.clipboard.writeText(cls.joinCode);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handleRequestAction = async (studentId: string, action: 'approve' | 'reject') => {
+    setActionLoading(studentId + action);
+    try {
+      await api.post(`/classes/${id}/approve-request`, { studentId, action });
+      await loadData();
+    } catch (err: any) {
+      alert(err.response?.data?.message || err.response?.data?.error || `Failed to ${action} request`);
+    } finally {
+      setActionLoading(null);
     }
   };
 
@@ -143,8 +156,65 @@ export default function TeacherClassDetail() {
       {/* Grid: Students / Assignments */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
-        {/* Enrolled Students (5 cols) */}
+        {/* Enrolled Students & Requests (5 cols) */}
         <div className="lg:col-span-5 space-y-6">
+          {/* Pending Student Join Requests */}
+          {((cls.joinRequests || []).filter((r: any) => r.status === 'pending')).length > 0 && (
+            <Card className="border-amber-300 bg-amber-50/40 shadow-sm">
+              <CardHeader className="border-b border-amber-200 bg-amber-100/50 py-3">
+                <div className="flex items-center justify-between">
+                  <h2 className="font-bold text-amber-950 flex items-center gap-2 text-sm">
+                    <Clock size={16} className="text-amber-600" /> Pending Join Requests
+                  </h2>
+                  <span className="bg-amber-200 text-amber-900 text-xs font-bold px-2.5 py-0.5 rounded-full border border-amber-300">
+                    {(cls.joinRequests || []).filter((r: any) => r.status === 'pending').length} waiting
+                  </span>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-3 space-y-2.5">
+                {(cls.joinRequests || [])
+                  .filter((r: any) => r.status === 'pending')
+                  .map((req: any) => {
+                    const student = req.student || {};
+                    const isApproving = actionLoading === (student._id || '') + 'approve';
+                    const isRejecting = actionLoading === (student._id || '') + 'reject';
+                    return (
+                      <div
+                        key={req._id || student._id}
+                        className="p-3 bg-white rounded-xl border border-amber-200 shadow-xs flex items-center justify-between gap-3"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="font-semibold text-slate-900 text-sm truncate">{student.name || 'Student'}</p>
+                          <p className="text-xs text-slate-500 truncate">{student.email || 'No email'}</p>
+                          <p className="text-[11px] text-slate-400 mt-0.5">
+                            {req.requestedAt ? new Date(req.requestedAt).toLocaleDateString() : 'Just now'}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            onClick={() => handleRequestAction(student._id, 'approve')}
+                            disabled={Boolean(actionLoading)}
+                            className="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-1 transition-all disabled:opacity-50 cursor-pointer shadow-xs"
+                            title="Approve student"
+                          >
+                            <UserCheck size={13} /> {isApproving ? '...' : 'Approve'}
+                          </button>
+                          <button
+                            onClick={() => handleRequestAction(student._id, 'reject')}
+                            disabled={Boolean(actionLoading)}
+                            className="px-2 py-1.5 rounded-lg bg-slate-100 hover:bg-red-50 text-slate-600 hover:text-red-600 text-xs font-semibold flex items-center gap-1 transition-all disabled:opacity-50 cursor-pointer border border-slate-200"
+                            title="Decline request"
+                          >
+                            <UserX size={13} /> {isRejecting ? '...' : 'Decline'}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </CardContent>
+            </Card>
+          )}
+
           <Card>
             <CardHeader className="border-b border-[#E2E8F0]">
               <h2 className="font-bold text-slate-900 flex items-center gap-2">

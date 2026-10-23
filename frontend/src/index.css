@@ -9,47 +9,49 @@ body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
-/* Light Surface Cards */
-.card {
-  @apply bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm shadow-slate-200/60 transition-all;
-}
-.card-hover {
-  @apply hover:shadow-md hover:border-slate-300 transition-all duration-200;
-}
-.card-inner {
-  @apply bg-slate-50/90 border border-slate-200/80 rounded-xl p-4;
-}
+@layer components {
+  /* Light Surface Cards */
+  .card {
+    @apply bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm shadow-slate-200/60 transition-all;
+  }
+  .card-hover {
+    @apply hover:shadow-md hover:border-slate-300 transition-all duration-200;
+  }
+  .card-inner {
+    @apply bg-slate-50/90 border border-slate-200/80 rounded-xl p-4;
+  }
 
-/* Buttons */
-.btn-primary {
-  @apply bg-gradient-to-r from-cyan-400 via-blue-600 to-indigo-600 hover:from-cyan-500 hover:via-blue-700 hover:to-indigo-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer;
-}
-.btn-secondary {
-  @apply bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/80 font-medium px-4 py-2 rounded-lg shadow-sm transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer;
-}
-.btn-ghost {
-  @apply text-slate-600 hover:text-blue-600 hover:bg-blue-50 font-medium px-4 py-2 rounded-lg flex items-center justify-center gap-1.5 transition-colors cursor-pointer;
-}
+  /* Buttons */
+  .btn-primary {
+    @apply bg-gradient-to-r from-cyan-400 via-blue-600 to-indigo-600 hover:from-cyan-500 hover:via-blue-700 hover:to-indigo-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer;
+  }
+  .btn-secondary {
+    @apply bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/80 font-medium px-4 py-2 rounded-lg shadow-sm transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer;
+  }
+  .btn-ghost {
+    @apply text-slate-600 hover:text-blue-600 hover:bg-blue-50 font-medium px-4 py-2 rounded-lg flex items-center justify-center gap-1.5 transition-colors cursor-pointer;
+  }
 
-/* Form Elements */
-.input-field {
-  @apply bg-white border border-slate-200/80 rounded-lg px-3 py-2 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all w-full shadow-sm;
-}
-.label {
-  @apply text-sm font-medium text-slate-700 mb-1 block;
-}
+  /* Form Elements */
+  .input-field {
+    @apply bg-white border border-slate-200/80 rounded-lg px-3 py-2 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all w-full shadow-sm;
+  }
+  .label {
+    @apply text-sm font-medium text-slate-700 mb-1 block;
+  }
 
-/* Pill Badges */
-.badge-blue {
-  @apply bg-blue-50 text-blue-600 border border-blue-100 rounded-full px-2.5 py-0.5 text-xs font-medium inline-flex items-center gap-1.5;
-}
-.badge-purple {
-  @apply bg-purple-50 text-purple-600 border border-purple-100 rounded-full px-2.5 py-0.5 text-xs font-medium inline-flex items-center gap-1.5;
-}
-.badge-amber {
-  @apply bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-2.5 py-0.5 text-xs font-medium inline-flex items-center gap-1.5;
-}
-.badge-green {
-  @apply bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full px-2.5 py-0.5 text-xs font-medium inline-flex items-center gap-1.5;
+  /* Pill Badges */
+  .badge-blue {
+    @apply bg-blue-50 text-blue-600 border border-blue-100 rounded-full px-2.5 py-0.5 text-xs font-medium inline-flex items-center gap-1.5;
+  }
+  .badge-purple {
+    @apply bg-purple-50 text-purple-600 border border-purple-100 rounded-full px-2.5 py-0.5 text-xs font-medium inline-flex items-center gap-1.5;
+  }
+  .badge-amber {
+    @apply bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-2.5 py-0.5 text-xs font-medium inline-flex items-center gap-1.5;
+  }
+  .badge-green {
+    @apply bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full px-2.5 py-0.5 text-xs font-medium inline-flex items-center gap-1.5;
+  }
 }
 

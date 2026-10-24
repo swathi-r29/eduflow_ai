@@ -116,6 +116,28 @@ export interface GradingResult {
   teacherScore: number | null;
   teacherFeedback?: string | null;
   teacherStatus: 'pending' | 'accepted' | 'edited' | 'overridden';
+  studentAppeal?: {
+    status: 'none' | 'pending' | 'resolved' | 'rejected';
+    justification?: string;
+    submittedAt?: string;
+    aiReEvaluation?: {
+      isValidAppeal: boolean;
+      bonusAwarded: number;
+      detailedExplanation: string;
+      recommendationForTeacher: string;
+    };
+  };
+  oralDefense?: {
+    verified: boolean;
+    score: number | null;
+    feedback?: string;
+    qaList?: {
+      question: string;
+      studentAnswer: string;
+      isSatisfactory: boolean;
+    }[];
+    completedAt?: string;
+  };
 }
 
 export interface Workspace {

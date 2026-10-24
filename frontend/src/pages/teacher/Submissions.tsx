@@ -288,6 +288,40 @@ export default function TeacherSubmissions() {
                         <strong>Detected Misconception:</strong> {grading.rootCause.detectedMisconception}
                       </div>
                     )}
+
+                    {/* Student Appeal Notice if present */}
+                    {grading.studentAppeal?.status === 'pending' && (
+                      <div className="text-sm bg-rose-50 text-rose-900 p-4 rounded-xl border border-rose-200 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <strong className="text-rose-800 font-bold flex items-center gap-1.5">
+                            ⚠️ Student Grading Appeal Submitted
+                          </strong>
+                          <span className="text-xs bg-rose-200/60 text-rose-900 px-2 py-0.5 rounded-full font-bold">Action Needed</span>
+                        </div>
+                        <p className="text-xs font-mono bg-white/80 p-2.5 rounded-lg border border-rose-200">
+                          "{grading.studentAppeal.justification}"
+                        </p>
+                        {grading.studentAppeal.aiReEvaluation && (
+                          <p className="text-xs text-rose-800">
+                            <strong>AI Preliminary Assessment:</strong> {grading.studentAppeal.aiReEvaluation.detailedExplanation}
+                            {grading.studentAppeal.aiReEvaluation.bonusAwarded > 0 && ` (+${grading.studentAppeal.aiReEvaluation.bonusAwarded} bonus points recommended)`}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Oral Viva Defense Integrity Badge */}
+                    {grading.oralDefense?.verified && (
+                      <div className="text-sm bg-emerald-50 text-emerald-900 p-3.5 rounded-xl border border-emerald-200 flex items-center justify-between">
+                        <div>
+                          <strong className="text-emerald-800 text-xs uppercase tracking-wider block">🛡️ Oral Viva Defense Verified</strong>
+                          <p className="text-xs text-emerald-700 font-medium mt-0.5">{grading.oralDefense.feedback || 'Student authenticated design and reasoning.'}</p>
+                        </div>
+                        <span className="text-xs bg-emerald-600 text-white font-bold px-2.5 py-1 rounded-lg">
+                          Score: {grading.oralDefense.score}%
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Rubric Criteria Breakdown */}

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../api/client';
-import { Plus, Users, BookOpen, ChevronRight, Sparkles, FolderPlus, Lightbulb, Clock, CheckCircle2, AlertTriangle, ArrowRight, X, RefreshCw } from 'lucide-react';
+import { Plus, Users, BookOpen, ChevronRight, Sparkles, FolderPlus, Lightbulb, Clock, CheckCircle2, AlertTriangle, ArrowRight, X, RefreshCw, Video, ExternalLink } from 'lucide-react';
 import { Card, CardHeader, CardContent } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { EmptyState } from '../../components/ui/EmptyState';
@@ -13,6 +13,7 @@ export default function TeacherDashboard() {
   const [strategyStats, setStrategyStats] = useState<any | null>(null);
   const [strategyLoading, setStrategyLoading] = useState(false);
   const [strategyError, setStrategyError] = useState<string | null>(null);
+  const [previewClip, setPreviewClip] = useState<{ title: string; timestamp: string; seek: number; videoUrl: string } | null>(null);
 
   const loadData = async () => {
     try {
@@ -240,6 +241,44 @@ export default function TeacherDashboard() {
                   </div>
                 </div>
               )}
+
+              {/* Recommended Click-to-Timestamp Video Remediation */}
+              <div className="border-t border-slate-100 pt-4 space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-wider text-indigo-700 flex items-center gap-1.5">
+                  <Video size={13} className="text-indigo-600" /> Click-to-Timestamp Video Deep-Links (Recommended Class Clip)
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {[
+                    { 
+                      title: 'Core Encapsulation & Data Hiding', 
+                      timestamp: '04:15 - 05:40', 
+                      seek: 255, 
+                      videoUrl: 'https://www.youtube.com/embed/bSrm9RXwBaI?autoplay=1&start=255' 
+                    },
+                    { 
+                      title: 'Constructor Initialization & This Shadowing', 
+                      timestamp: '08:30 - 10:10', 
+                      seek: 510, 
+                      videoUrl: 'https://www.youtube.com/embed/bSrm9RXwBaI?autoplay=1&start=510' 
+                    }
+                  ].map((clip, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setPreviewClip(clip)}
+                      className="p-3 bg-indigo-50/70 hover:bg-indigo-100/90 border border-indigo-200/80 rounded-xl flex items-center justify-between text-xs transition-all group text-left cursor-pointer"
+                    >
+                      <div className="space-y-0.5">
+                        <span className="font-bold text-slate-800 group-hover:text-indigo-700 block">{clip.title}</span>
+                        <span className="font-mono text-indigo-700 font-bold bg-white px-2 py-0.5 rounded border border-indigo-100 inline-block text-[11px]">
+                          ▶️ Play at {clip.timestamp}
+                        </span>
+                      </div>
+                      <ExternalLink className="w-3.5 h-3.5 text-indigo-400 group-hover:text-indigo-600 shrink-0 ml-2" />
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
         </CardContent>
@@ -302,6 +341,53 @@ export default function TeacherDashboard() {
           />
         )}
       </div>
+
+      {/* Embedded Video Clip Preview Modal */}
+      {previewClip && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 space-y-0">
+            <div className="p-4 bg-slate-900 text-white flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Video className="w-5 h-5 text-indigo-400" />
+                <div>
+                  <h3 className="text-sm font-bold text-white">{previewClip.title}</h3>
+                  <span className="text-[11px] font-mono text-indigo-300">Target Segment: {previewClip.timestamp}</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPreviewClip(null)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg transition-colors cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="relative aspect-video bg-black">
+              <iframe
+                src={previewClip.videoUrl}
+                title={previewClip.title}
+                className="w-full h-full border-0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+
+            <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs">
+              <span className="text-slate-600 font-medium">
+                🎯 Deep-linked automatically to misconception remediation timestamp ({previewClip.timestamp}).
+              </span>
+              <button
+                type="button"
+                onClick={() => setPreviewClip(null)}
+                className="px-4 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-xl transition-all cursor-pointer"
+              >
+                Close Video
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

@@ -34,7 +34,28 @@ const gradingResultSchema = new mongoose.Schema({
   teacherFeedback: { type: String, default: null },
   teacherStatus: { type: String, enum: ['pending', 'accepted', 'edited', 'overridden'], default: 'pending' },
   reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
-  reviewedAt: { type: Date, default: null }
+  reviewedAt: { type: Date, default: null },
+
+  // Grading Appeal / Negotiation
+  studentAppeal: {
+    status: { type: String, enum: ['none', 'pending', 'resolved', 'rejected'], default: 'none' },
+    justification: { type: String, default: null },
+    submittedAt: { type: Date, default: null },
+    aiReEvaluation: { type: mongoose.Schema.Types.Mixed, default: null }
+  },
+
+  // Socratic Viva / Concept Defense
+  oralDefense: {
+    verified: { type: Boolean, default: false },
+    score: { type: Number, default: null },
+    feedback: { type: String, default: null },
+    qaList: [{
+      question: { type: String },
+      studentAnswer: { type: String },
+      isSatisfactory: { type: Boolean }
+    }],
+    completedAt: { type: Date, default: null }
+  }
 }, { timestamps: true });
 
 export default mongoose.model('GradingResult', gradingResultSchema);

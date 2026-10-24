@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { api } from '../../api/client';
 import type { Workspace } from '../../types';
 import { FolderPlus, BookOpen } from 'lucide-react';
@@ -11,8 +11,17 @@ export default function Workspaces() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [creating, setCreating] = useState(false);
   const [title, setTitle] = useState('');
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
-  const load = () => api.get('/workspaces').then((r) => setWorkspaces(r.data.workspaces));
+  const load = () => api.get('/workspaces').then((r) => {
+    const list = r.data.workspaces || [];
+    setWorkspaces(list);
+    const seek = searchParams.get('seek');
+    if (seek && list.length > 0) {
+      navigate(`/student/workspaces/${list[0]._id}?seek=${seek}`, { replace: true });
+    }
+  });
   useEffect(() => { load(); }, []);
 
   const create = async () => {

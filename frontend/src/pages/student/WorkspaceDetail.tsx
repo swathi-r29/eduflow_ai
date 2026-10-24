@@ -23,6 +23,7 @@ export default function WorkspaceDetail() {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [asking, setAsking] = useState(false);
   const [contentMode, setContentMode] = useState('quiz');
+  const [socraticMode, setSocraticMode] = useState(true);
   const [selectedSourceId, setSelectedSourceId] = useState<string>('active');
   const [generatedContent, setGeneratedContent] = useState<string | null>(null);
   const [parsedFlashcards, setParsedFlashcards] = useState<Flashcard[]>([]);
@@ -127,7 +128,7 @@ export default function WorkspaceDetail() {
     setQuestion('');
     setAsking(true);
     try {
-      const { data } = await api.post('/study/query', { workspaceId: id, question: q, conversationId });
+      const { data } = await api.post('/study/query', { workspaceId: id, question: q, conversationId, socraticMode });
       setConversationId(data.conversationId);
       setMessages((prev) => [...prev, { role: 'assistant', content: data.answer, sources: data.sources, grounded: data.grounded }]);
     } catch (err: any) {
@@ -307,11 +308,39 @@ export default function WorkspaceDetail() {
         <div className="lg:col-span-5 space-y-6">
           {/* AI Study Assistant Chat */}
           <Card className="flex flex-col h-[560px]">
-            <CardHeader className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
-              <h2 className="font-bold text-sm flex items-center gap-2 text-slate-900">
-                <Sparkles size={16} className="text-[#2563EB]" /> Grounded AI Tutor
-              </h2>
-              <span className="text-xs font-semibold bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full">EduFlow AI</span>
+            <CardHeader className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[#E2E8F0]">
+              <div className="flex items-center gap-2">
+                <Sparkles size={16} className="text-[#2563EB]" />
+                <h2 className="font-bold text-sm text-slate-900">Grounded AI Tutor</h2>
+              </div>
+
+              {/* Socratic Guardrail Toggle Switch */}
+              <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl text-xs font-bold border border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => setSocraticMode(true)}
+                  className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                    socraticMode
+                      ? 'bg-indigo-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-indigo-600'
+                  }`}
+                  title="Socratic Mode: Guides with clues & questions; refuses to give away direct solutions"
+                >
+                  🛡️ Socratic Mentor
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSocraticMode(false)}
+                  className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                    !socraticMode
+                      ? 'bg-slate-700 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                  title="Direct Answers: Standard Q&A mode"
+                >
+                  Direct Answers
+                </button>
+              </div>
             </CardHeader>
 
             <CardContent className="flex-1 overflow-y-auto space-y-4 p-4 text-sm flex flex-col bg-slate-50/50">

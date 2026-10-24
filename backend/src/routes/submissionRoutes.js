@@ -13,7 +13,10 @@ import {
   getSubmission,
   listSubmissions,
   calibrateGrading,
-  completeJourneyNode
+  completeJourneyNode,
+  requestGradeAppeal,
+  submitOralDefense,
+  quickFixAndSandboxRerun
 } from '../controllers/submissionController.js';
 
 const router = Router();
@@ -39,7 +42,12 @@ router.post('/class-reteach/:assignmentId', requireRole('teacher'), getClassReTe
 router.post('/teacher-review-strategy', requireRole('teacher'), getTeacherReviewStrategy);
 router.post('/plagiarism/:assignmentId', requireRole('teacher', 'admin'), checkAssignmentPlagiarism);
 
-// 6. Querying & Calibration
+// 6. Interactive Oral Defense, Appeal & Sandbox Re-Run
+router.post('/:id/appeal', requestGradeAppeal);
+router.post('/:id/defense', submitOralDefense);
+router.post('/:id/quick-fix', quickFixAndSandboxRerun);
+
+// 7. Querying & Calibration
 router.get('/mine', listSubmissions);
 router.get('/', listSubmissions);
 router.get('/assignment/:assignmentId', listSubmissions);

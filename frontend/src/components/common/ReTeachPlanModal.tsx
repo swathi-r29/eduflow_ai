@@ -1,5 +1,6 @@
 import React from 'react';
-import { X, Apple, Users, Clock, AlertTriangle } from 'lucide-react';
+import { X, Apple, Users, Clock, AlertTriangle, Video, ExternalLink } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export interface PeerPair {
   mentor: string;
@@ -7,11 +8,20 @@ export interface PeerPair {
   concept: string;
 }
 
+export interface RecommendedClip {
+  title: string;
+  timestamp: string;
+  seconds: number;
+  workspaceId?: string;
+  videoId?: string;
+}
+
 export interface ReTeachPlan {
   summary?: string;
   topWeaknesses?: string[];
   peerPairs?: PeerPair[];
   lessonPlan?: string[];
+  recommendedClips?: RecommendedClip[];
 }
 
 interface ReTeachPlanModalProps {
@@ -112,6 +122,33 @@ export default function ReTeachPlanModal({ isOpen, onClose, plan, isLoading }: R
                       </span>
                       <span className="font-medium leading-relaxed">{step}</span>
                     </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Recommended Video Timestamps */}
+            {plan?.recommendedClips && plan.recommendedClips.length > 0 && (
+              <div className="space-y-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-indigo-700 flex items-center gap-1.5">
+                  <Video className="w-4 h-4 text-indigo-600" /> Click-to-Timestamp Video Deep-Links
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {plan.recommendedClips.map((clip, i) => (
+                    <Link
+                      key={i}
+                      to={clip.workspaceId ? `/student/workspaces/${clip.workspaceId}?videoId=${clip.videoId || ''}&seek=${clip.seconds}` : '#'}
+                      onClick={() => onClose()}
+                      className="p-3 bg-indigo-50/70 hover:bg-indigo-100/80 border border-indigo-200/70 rounded-2xl flex items-center justify-between text-xs transition-all group"
+                    >
+                      <div className="space-y-0.5">
+                        <span className="font-bold text-slate-800 group-hover:text-indigo-700 block line-clamp-1">{clip.title}</span>
+                        <span className="font-mono text-indigo-700 font-bold bg-white px-2 py-0.5 rounded-md border border-indigo-100 inline-block text-[11px]">
+                          ⏱️ Jump to {clip.timestamp}
+                        </span>
+                      </div>
+                      <ExternalLink className="w-4 h-4 text-indigo-400 group-hover:text-indigo-600 shrink-0 ml-2" />
+                    </Link>
                   ))}
                 </div>
               </div>
